@@ -12,7 +12,7 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # --- Configuration ---
 APP_NAME="Claude Crutches"
-BUNDLE_ID="com.claudecrutches.excel-to-csv"
+BUNDLE_ID="com.claudecrutches.app"
 VERSION="${VERSION:-1.0.0}"
 DISPLAY_NAME="Claude Crutches"
 NOTARY_PROFILE="${NOTARY_PROFILE:-notarytool-profile}"
@@ -69,6 +69,23 @@ echo "==> Cleaning build directory"
 rm -rf "$APP_BUNDLE" "$DMG_PATH"
 mkdir -p "$BUILD_DIR"
 
+# --- Compile Swift PDF converter ---
+echo "==> Compiling Swift PDF converter (universal binary)"
+SWIFT_OUT="$BUILD_DIR/pdf-to-files"
+swiftc -O \
+    -target arm64-apple-macosx${MIN_MACOS} \
+    -o "${SWIFT_OUT}-arm64" \
+    "$SRC_DIR/pdf_to_files.swift" \
+    -framework PDFKit -framework AppKit -framework CoreGraphics
+swiftc -O \
+    -target x86_64-apple-macosx${MIN_MACOS} \
+    -o "${SWIFT_OUT}-x86_64" \
+    "$SRC_DIR/pdf_to_files.swift" \
+    -framework PDFKit -framework AppKit -framework CoreGraphics
+lipo -create "${SWIFT_OUT}-arm64" "${SWIFT_OUT}-x86_64" -output "$SWIFT_OUT"
+rm "${SWIFT_OUT}-arm64" "${SWIFT_OUT}-x86_64"
+echo "    Built universal binary: $SWIFT_OUT"
+
 # --- Compile AppleScript droplet ---
 echo "==> Compiling AppleScript droplet"
 osacompile -o "$APP_BUNDLE" "$SRC_DIR/droplet.applescript"
@@ -78,11 +95,13 @@ echo "==> Embedding resources"
 CONTENTS_DIR="$APP_BUNDLE/Contents"
 APP_RESOURCES="$CONTENTS_DIR/Resources"
 
-# Copy Python converter script
+# Copy Python converter script + vendored packages (for Excel)
 cp "$SRC_DIR/excel_to_csv.py" "$APP_RESOURCES/"
-
-# Copy vendored Python packages
 cp -R "$VENDOR_DIR" "$APP_RESOURCES/vendor"
+
+# Copy Swift PDF converter binary
+cp "$SWIFT_OUT" "$APP_RESOURCES/pdf-to-files"
+chmod +x "$APP_RESOURCES/pdf-to-files"
 
 # --- Customise Info.plist ---
 echo "==> Configuring Info.plist"
@@ -119,12 +138,19 @@ PLIST="$CONTENTS_DIR/Info.plist"
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:1 string com.microsoft.excel.xls" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:2 string public.comma-separated-values-text" "$PLIST"
 
-# Folders
+# PDF files
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1 dict" "$PLIST"
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeName string Folder" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeName string 'PDF Document'" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeRole string Viewer" "$PLIST"
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:LSItemContentTypes array" "$PLIST"
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:LSItemContentTypes:0 string public.folder" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:LSItemContentTypes:0 string com.adobe.pdf" "$PLIST"
+
+# Folders
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2 dict" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeName string Folder" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeRole string Viewer" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:LSItemContentTypes array" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:LSItemContentTypes:0 string public.folder" "$PLIST"
 
 # --- Code Signing ---
 if [ "$UNSIGNED" = false ]; then
