@@ -11,13 +11,9 @@ A macOS droplet app that converts Excel and PDF files into Claude-friendly forma
 
 You can drop individual files or entire folders — the app will find all convertible files recursively.
 
-## Requirements
+## Building from Source
 
-- macOS 13.0+
-- Xcode Command Line Tools (for building the Swift PDF converter)
-- Python 3 (ships with macOS; needed at runtime for Excel conversion)
-
-## Build
+Requirements: macOS 13.0+, Xcode Command Line Tools, Python 3.
 
 ```bash
 # Full build: sign + notarize + DMG
