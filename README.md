@@ -14,7 +14,8 @@ You can drop individual files or entire folders — the app will find all conver
 ## Requirements
 
 - macOS 13.0+
-- Python 3 (for Excel conversion; uses vendored `openpyxl`)
+- Xcode Command Line Tools (for building the Swift PDF converter)
+- Python 3 (ships with macOS; needed at runtime for Excel conversion)
 
 ## Build
 
@@ -48,12 +49,12 @@ make release       # Build + sign + notarize + GitHub release
 
 ## How It Works
 
-The app is an AppleScript droplet that dispatches to two converters:
+The app is a native macOS AppleScript droplet that dispatches to two bundled converters:
 
-- **`excel_to_csv.py`** — Python script using openpyxl to split each sheet into a CSV
-- **`pdf_to_files`** — Native Swift binary using PDFKit to extract text and render page images
+- **`pdf_to_files`** — Swift binary using macOS PDFKit to extract text and render page images
+- **`excel_to_csv.py`** — Thin Python script using vendored openpyxl to split sheets into CSVs
 
-Both are bundled inside the `.app` along with vendored Python dependencies.
+PDF conversion is entirely native (Swift + PDFKit). Excel conversion uses Python only because there's no native macOS API for reading `.xlsx` files.
 
 ## License
 
