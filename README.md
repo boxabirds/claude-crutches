@@ -47,14 +47,26 @@ make test-all      # All of the above
 make release       # Build + sign + notarize + GitHub release
 ```
 
-## How It Works
+## Install
 
-The app is a native macOS AppleScript droplet that dispatches to two bundled converters:
+1. Open the DMG and drag **Claude Crutches** to your Applications folder
+2. Drag it from Applications to your Dock for easy access
+
+## Usage
+
+Drop files or folders onto the app icon (in the Dock or in Finder). Converted output appears next to the original files:
+
+- `report.xlsx` → `report.xlsx-csv/` (one CSV per sheet)
+- `paper.pdf` → `paper.pdf-files/` (markdown text + rendered page images)
+
+Upload the output folder to Claude.
+
+## Architecture
+
+Native macOS droplet app with two bundled converters:
 
 - **`pdf_to_files`** — Swift binary using macOS PDFKit to extract text and render page images
 - **`excel_to_csv.py`** — Thin Python script using vendored openpyxl to split sheets into CSVs
-
-PDF conversion is entirely native (Swift + PDFKit). Excel conversion uses Python only because there's no native macOS API for reading `.xlsx` files.
 
 ## License
 
