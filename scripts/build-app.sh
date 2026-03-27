@@ -140,8 +140,9 @@ if [ "$UNSIGNED" = false ]; then
         codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_RESOURCES/Scripts/main.scpt"
     fi
 
-    # Sign the applet executable
-    codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$CONTENTS_DIR/MacOS/applet"
+    # Sign the droplet executable (osacompile names it 'droplet' for on-open handlers)
+    EXECUTABLE=$(find "$CONTENTS_DIR/MacOS" -type f | head -1)
+    codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$EXECUTABLE"
 
     # Sign the whole bundle with entitlements
     codesign --force --options runtime --timestamp \
