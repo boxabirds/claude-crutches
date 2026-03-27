@@ -228,7 +228,7 @@ if [ "$UNSIGNED" = false ]; then
         spctl --assess --type execute --verbose "$APP_BUNDLE" 2>&1 || true
 
         echo "    Gatekeeper assessment (DMG):"
-        spctl --assess --type open --verbose "$DMG_PATH" 2>&1 || true
+        spctl --assess --context context:primary-signature --verbose "$DMG_PATH" 2>&1 || true
 
         echo "    Staple validation:"
         xcrun stapler validate "$DMG_PATH" 2>&1 || true
