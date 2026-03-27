@@ -156,8 +156,13 @@ PLIST="$CONTENTS_DIR/Info.plist"
 if [ "$UNSIGNED" = false ]; then
     echo "==> Signing app bundle (inside-out)"
 
-    # Sign all nested code first (vendored Python, scripts)
-    find "$APP_BUNDLE" -type f -name "*.py" -o -name "*.sh" | while read -r f; do
+    # Sign embedded Mach-O binaries first (deepest-first)
+    if [ -f "$APP_RESOURCES/pdf-to-files" ]; then
+        codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$APP_RESOURCES/pdf-to-files"
+    fi
+
+    # Sign all nested code (vendored Python, scripts)
+    find "$APP_BUNDLE" -type f \( -name "*.py" -o -name "*.sh" \) | while read -r f; do
         codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$f" 2>/dev/null || true
     done
 
